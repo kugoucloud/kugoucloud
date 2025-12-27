@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线路延时测试跳转页</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f7f9fc;
+            color: #333;
+        }
+        h1 { text-align: center; }
+        .url-list { list-style: none; padding: 0; }
+        .url-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .url-item a {
+            text-decoration: none;
+            color: #0066cc;
+            font-size: 18px;
+            flex: 1;
+        }
+        .status {
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            min-width: 80px;
+            text-align: center;
+        }
+        .testing { background: #ddd; color: #666; }
+        .good { background: #d4edda; color: #155724; }
+        .medium { background: #fff3cd; color: #856404; }
+        .bad { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>线路延时测试</h1>
+    <p style="text-align:center;color:#666;">页面加载后自动测试各线路响应时间（绿色最快，每30秒刷新）</p>
+    
+    <ul class="url-list" id="urlList">
+        <li class="url-item">
+            <a href="https://www.google.com" target="_blank">Google 国际</a>
+            <span class="status testing">测试中...</span>
+        </li>
+        <li class="url-item">
+            <a href="https://www.baidu.com" target="_blank">百度 国内</a>
+            <span class="status testing">测试中...</span>
+        </li>
+        <li class="url-item">
+            <a href="https://www.cloudflare.com" target="_blank">Cloudflare 官网</a>
+            <span class="status testing">测试中...</span>
+        </li>
+        <li class="url-item">
+            <a href="https://github.com" target="_blank">GitHub</a>
+            <span class="status testing">测试中...</span>
+        </li>
+        <li class="url-item">
+            <a href="https://www.youtube.com" target="_blank">YouTube</a>
+            <span class="status testing">测试中...</span>
+        </li>
+        <li class="url-item">
+            <a href="https://www.apple.com/library/test/success.html" target="_blank">Apple 测试页（常用于测速）</a>
+            <span class="status testing">测试中...</span>
+        </li>
+        <li class="url-item">
+            <a href="https://chat.openai.com" target="_blank">ChatGPT</a>
+            <span class="status testing">测试中...</span>
+        </li>
+        <li class="url-item">
+            <a href="https://www.taobao.com" target="_blank">淘宝</a>
+            <span class="status testing">测试中...</span>
+        </li>
+    </ul>
+
+    <script>
+        const urls = [
+            { name: "Google 国际", url: "https://www.google.com" },
+            { name: "百度 国内", url: "https://www.baidu.com" },
+            { name: "Cloudflare 官网", url: "https://www.cloudflare.com" },
+            { name: "GitHub", url: "https://github.com" },
+            { name: "YouTube", url: "https://www.youtube.com" },
+            { name: "Apple 测试页", url: "https://www.apple.com/library/test/success.html" },
+            { name: "ChatGPT", url: "https://chat.openai.com" },
+            { name: "淘宝", url: "https://www.taobao.com" }
+        ];
+
+        async function testLatency(url, element) {
+            const start = performance.now();
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                
+                await fetch(url, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                const latency = Math.round(performance.now() - start);
+                
+                let statusClass = 'good';
+                let text = `${latency}ms`;
+                if (latency > 300) statusClass = 'medium';
+                if (latency > 800) statusClass = 'bad';
+                
+                element.textContent = text;
+                element.className = `status ${statusClass}`;
+            } catch (err) {
+                element.textContent = '超时/失败';
+                element.className = 'status bad';
+            }
+        }
+
+        window.onload = function() {
+            const items = document.querySelectorAll('.url-item');
+            items.forEach((item, index) => {
+                const statusEl = item.querySelector('.status');
+                testLatency(urls[index].url, statusEl);
+                
+                setInterval(() => {
+                    statusEl.textContent = '测试中...';
+                    statusEl.className = 'status testing';
+                    testLatency(urls[index].url, statusEl);
+                }, 30000);
+            });
+        };
+    </script>
+</body>
+</html>
