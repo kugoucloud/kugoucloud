@@ -1,0 +1,16 @@
+name: GetM4Core
+on: workflow_dispatch  # 允许手动点击运行
+
+jobs:
+  download_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 绕过拦截下载核心包
+        run: |
+          curl -L -o wxedge_arm64.tar https://static.onethingsmart.com/download/wxedge/wxedge_arm64.tar
+          
+      - name: 把文件变成可下载的附件
+        uses: actions/upload-artifact@v4
+        with:
+          name: wxedge-for-m4
+          path: wxedge_arm64.tar
