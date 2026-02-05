@@ -1,20 +1,19 @@
-name: GetM4Core
+name: ExtractM4Core
 on: workflow_dispatch
 
 jobs:
-  download:
+  extract:
     runs-on: ubuntu-latest
     steps:
-      - name: 暴力拉取核心包
+      - name: 强行拆解镜像
         run: |
-          # 尝试从另一个官方备用节点拉取，并增加重试逻辑
-          curl -L -k --retry 5 -o wxedge_arm64.tar https://static.onethingsmart.com/download/wxedge/wxedge_arm64.tar
+          docker create --name=grab onething1/wxedge
+          # 尝试多个可能的存放路径，总有一个是对的
+          docker cp grab:/usr/bin/wxedge ./wxedge || docker cp grab:/wxedge ./wxedge || docker cp grab:/app/wxedge ./wxedge
+          tar -cvf wxedge_core.tar wxedge
           
-      - name: 检查文件大小
-        run: ls -lh wxedge_arm64.tar
-
-      - name: 上传火种
+      - name: 上传提取出的二进制
         uses: actions/upload-artifact@v4
         with:
-          name: wxedge-package
-          path: wxedge_arm64.tar
+          name: wxedge-m4-binary
+          path: wxedge_core.tar
